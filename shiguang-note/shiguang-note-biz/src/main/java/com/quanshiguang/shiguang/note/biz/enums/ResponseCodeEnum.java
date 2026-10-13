@@ -31,6 +31,9 @@ public enum ResponseCodeEnum implements BaseExceptionInterface {
     NOTE_NOT_LIKED("NOTE-20009", "您未点赞该篇笔记，无法取消点赞"),
     NOTE_ALREADY_COLLECTED("NOTE-20010", "您已经收藏过该笔记"),
     NOTE_NOT_COLLECTED("NOTE-20011", "您未收藏该篇笔记，无法取消收藏"),
+    ANNOUNCEMENT_NOT_FOUND("NOTE-21001", "公告不存在"),
+    ANNOUNCEMENT_ALREADY_READ("NOTE-21002", "您已确认过该公告"),
+    ANNOUNCEMENT_PUBLISH_FAIL("NOTE-21003", "公告发布失败"),
     ;
 
     // 异常码

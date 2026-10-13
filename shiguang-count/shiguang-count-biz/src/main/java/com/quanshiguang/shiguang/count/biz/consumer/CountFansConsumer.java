@@ -7,6 +7,7 @@ import com.quanshiguang.shiguang.count.biz.constant.MQConstants;
 import com.quanshiguang.shiguang.count.biz.constant.RedisKeyConstants;
 import com.quanshiguang.shiguang.count.biz.enums.FollowUnfollowTypeEnum;
 import com.quanshiguang.shiguang.count.biz.model.dto.CountFollowUnfollowMqDTO;
+import com.quanshiguang.shiguang.count.biz.service.DedupService;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.ibatis.annotations.Case;
@@ -43,6 +44,8 @@ public class CountFansConsumer implements RocketMQListener<String> {
     private RedisTemplate<String, Object> redisTemplate;
     @Resource
     private RocketMQTemplate rocketMQTemplate;
+    @Resource
+    private DedupService dedupService;
 
     private BufferTrigger<String> bufferTrigger = BufferTrigger.<String>batchBlocking()
             .bufferSize(50000) // 缓存队列的最大容量
@@ -53,6 +56,27 @@ public class CountFansConsumer implements RocketMQListener<String> {
 
     @Override
     public void onMessage(String body) {
+        // 幂等拦截: 在消息进入聚合缓冲区前完成判重,
+        // 重复消息(消费重试/Rebalance 重投/业务重放)不再进入计数链路
+        try {
+            CountFollowUnfollowMqDTO dto = JsonUtils.parseObject(body, CountFollowUnfollowMqDTO.class);
+            if (Objects.nonNull(dto) && Objects.nonNull(dto.getUserId())
+                    && Objects.nonNull(dto.getTargetUserId())) {
+                // 业务幂等键: topic + 主体 + 动作
+                // (业务键而非 msgId: msgId 生产端重发会变,防不了业务重放)
+                String action = Integer.valueOf(1).equals(dto.getType()) ? "FOLLOW" : "UNFOLLOW";
+                String bizKey = MQConstants.TOPIC_COUNT_FANS + ":"
+                        + dto.getUserId() + ":" + dto.getTargetUserId() + ":" + action;
+                if (dedupService.isDuplicate(bizKey, null)) {
+                    // 重复消息,直接确认消费成功(拦截)
+                    return;
+                }
+            }
+        } catch (Exception e) {
+            // 幂等检查异常不阻断消费(宁可重复消费交给对账修正,不可漏消费)
+            log.error("==> [幂等] 判重异常,消息继续处理: {}", body, e);
+        }
+
         // 往 bufferTrigger 中添加元素
         bufferTrigger.enqueue(body);
     }

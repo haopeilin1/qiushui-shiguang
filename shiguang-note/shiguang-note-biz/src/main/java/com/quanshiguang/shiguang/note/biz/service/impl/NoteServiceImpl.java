@@ -351,8 +351,12 @@ public class NoteServiceImpl implements NoteService {
 
         // 并发查询优化
         // RPC: 调用用户服务
+        // Fix: 笔记详情的作者信息应查询笔记创建者，而非当前登录用户；
+        // 原实现误传 userId 导致非作者查看笔记时，作者昵称/头像显示为查看者本人，
+        // 且错误数据会随缓存写入污染 Redis 与本地 Caffeine 缓存（修复后需失效既有缓存）
+        Long creatorId = noteDO.getCreatorId();
         CompletableFuture<FindUserByIdRspDTO> userResultFuture = CompletableFuture
-                .supplyAsync(() -> userRpcService.findById(userId), threadPoolTaskExecutor);
+                .supplyAsync(() -> userRpcService.findById(creatorId), threadPoolTaskExecutor);
 
         // RPC: 调用 K-V 存储服务获取内容
         CompletableFuture<String> contentResultFuture = CompletableFuture.completedFuture(null);

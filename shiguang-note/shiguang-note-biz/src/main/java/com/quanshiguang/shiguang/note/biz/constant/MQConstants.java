@@ -14,6 +14,11 @@ public interface MQConstants {
     String TOPIC_DELETE_NOTE_LOCAL_CACHE = "DeleteNoteLocalCacheTopic";
 
     /**
+     * Topic: 公告已读确认(异步落库)
+     */
+    String TOPIC_ANNOUNCEMENT_READ = "AnnouncementReadTopic";
+
+    /**
      * Topic 主题：延迟双删 Redis 笔记缓存
      */
     String TOPIC_DELAY_DELETE_NOTE_REDIS_CACHE = "DelayDeleteNoteRedisCacheTopic";

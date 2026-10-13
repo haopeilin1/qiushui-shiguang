@@ -49,6 +49,31 @@ public class RedisKeyConstants {
     public static final String USER_NOTE_COLLECT_ZSET_KEY = "user:note:collects:";
 
     /**
+     * 【已读回执子域】公告已读确认记录 KEY 前缀
+     * value 为公告ID,用于幂等判重(同一用户对同一公告仅确认一次)
+     */
+    private static final String ANNOUNCEMENT_READ_CONFIRM_KEY = "announcement:read:confirm:";
+
+    /**
+     * 【已读回执子域】公告已读计数 KEY 前缀(Hash: announcementId -> readTotal)
+     */
+    private static final String ANNOUNCEMENT_READ_COUNT_KEY = "announcement:read:count:";
+
+    /**
+     * 【已读回执子域】构建已读确认记录 KEY: announcement:read:confirm:{userId}
+     */
+    public static String buildAnnouncementReadConfirmKey(Long userId) {
+        return ANNOUNCEMENT_READ_CONFIRM_KEY + userId;
+    }
+
+    /**
+     * 【已读回执子域】构建已读计数 KEY: announcement:read:count:{announcementId}
+     */
+    public static String buildAnnouncementReadCountKey(Long announcementId) {
+        return ANNOUNCEMENT_READ_COUNT_KEY + announcementId;
+    }
+
+    /**
      * 构建完整的已发布笔记列表 KEY
      * @param userId
      * @return
