@@ -13,6 +13,7 @@ import org.springframework.dao.DuplicateKeyException;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
 
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.Objects;
 
@@ -77,12 +78,17 @@ public class AnnouncementReadConsumer implements RocketMQListener<String> {
         String countKey = RedisKeyConstants.buildAnnouncementReadCountKey(dto.getAnnouncementId());
         try {
             if (Boolean.TRUE.equals(redisTemplate.hasKey(countKey))) {
-                redisTemplate.opsForHash().increment(countKey, "readTotal", 1);
+                // hash value 走 Jackson 序列化(带引号),HINCRBY 不可用,改为读改写
+                Object cur = redisTemplate.opsForHash().get(countKey, "readTotal");
+                long next = (Objects.nonNull(cur) ? Long.parseLong(cur.toString()) : 0L) + 1;
+                redisTemplate.opsForHash().put(countKey, "readTotal", String.valueOf(next));
             } else {
                 // 计数结构不存在时初始化(以 DB 实际值+本次增量为基准,防覆盖)
                 Long dbTotal = announcementReadDOMapper.countByAnnouncementId(dto.getAnnouncementId());
                 redisTemplate.opsForHash().put(countKey, "readTotal", dbTotal.toString());
             }
+            // 短 TTL 防脏计数长期驻留: 过期后 readStat 回源 DB count(*) 重建
+            redisTemplate.expire(countKey, Duration.ofMinutes(10));
         } catch (Exception e) {
             // 计数更新失败不影响回执落库;readStat 有 DB 回源兜底
             log.error("==> 已读计数更新失败(统计读数将由 DB 回源兜底): ", e);

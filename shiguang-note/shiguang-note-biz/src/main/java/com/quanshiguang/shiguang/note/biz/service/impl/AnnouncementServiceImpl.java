@@ -29,6 +29,7 @@ import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.Objects;
 
@@ -156,9 +157,10 @@ public class AnnouncementServiceImpl implements AnnouncementService {
         if (Objects.nonNull(readTotalObj)) {
             readTotal = Long.parseLong(readTotalObj.toString());
         } else {
-            // Redis 无计数(未消费或过期): 回源 DB 并回写
+            // Redis 无计数(未消费或过期): 回源 DB 并回写(短 TTL,防脏计数长期驻留)
             readTotal = announcementReadDOMapper.countByAnnouncementId(announcementId);
             redisTemplate.opsForHash().put(countKey, "readTotal", readTotal.toString());
+            redisTemplate.expire(countKey, Duration.ofMinutes(10));
         }
 
         // 应读数: 企业用户总数(同库直查,避免跨服务契约变更)

@@ -72,7 +72,7 @@ CREATE TABLE `t_permission` (
 
 DROP TABLE IF EXISTS `t_user_role_rel`;
 CREATE TABLE `t_user_role_rel` (
-  `id`          BIGINT   NOT NULL,
+  `id`          BIGINT   NOT NULL AUTO_INCREMENT,
   `user_id`     BIGINT   NOT NULL,
   `role_id`     BIGINT   NOT NULL,
   `create_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -162,7 +162,7 @@ CREATE TABLE `t_note_collection` (
 -- ------------------------------------------------------------
 DROP TABLE IF EXISTS `t_note_count`;
 CREATE TABLE `t_note_count` (
-  `id`            BIGINT  NOT NULL,
+  `id`            BIGINT  NOT NULL AUTO_INCREMENT,
   `note_id`       BIGINT  NOT NULL,
   `like_total`    BIGINT  DEFAULT 0,
   `collect_total` BIGINT  DEFAULT 0,
@@ -173,7 +173,7 @@ CREATE TABLE `t_note_count` (
 
 DROP TABLE IF EXISTS `t_user_count`;
 CREATE TABLE `t_user_count` (
-  `id`              BIGINT NOT NULL,
+  `id`              BIGINT NOT NULL AUTO_INCREMENT,
   `user_id`         BIGINT NOT NULL,
   `fans_total`      BIGINT DEFAULT 0,
   `following_total` BIGINT DEFAULT 0,
@@ -189,7 +189,7 @@ CREATE TABLE `t_user_count` (
 -- ------------------------------------------------------------
 DROP TABLE IF EXISTS `t_following`;
 CREATE TABLE `t_following` (
-  `id`                BIGINT   NOT NULL,
+  `id`                BIGINT   NOT NULL AUTO_INCREMENT,
   `user_id`           BIGINT   NOT NULL COMMENT '关注者',
   `following_user_id` BIGINT   NOT NULL COMMENT '被关注者',
   `create_time`       DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -200,7 +200,7 @@ CREATE TABLE `t_following` (
 
 DROP TABLE IF EXISTS `t_fans`;
 CREATE TABLE `t_fans` (
-  `id`           BIGINT   NOT NULL,
+  `id`           BIGINT   NOT NULL AUTO_INCREMENT,
   `user_id`      BIGINT   NOT NULL COMMENT '被关注者',
   `fans_user_id` BIGINT   NOT NULL COMMENT '关注者',
   `create_time`  DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
