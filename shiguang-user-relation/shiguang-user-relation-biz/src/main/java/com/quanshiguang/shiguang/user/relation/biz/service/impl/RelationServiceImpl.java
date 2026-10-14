@@ -148,11 +148,12 @@ public class RelationServiceImpl implements RelationService {
         }
 
         // 发送 MQ
-        // 构建消息体 DTO
+        // 构建消息体 DTO(业务事件 ID 在此生成: 一次关注动作一个 ID,下游幂等键以其为准)
         FollowUserMqDTO followUserMqDTO = FollowUserMqDTO.builder()
                 .userId(userId)
                 .followUserId(followUserId)
                 .createTime(now)
+                .eventId(UUID.randomUUID().toString())
                 .build();
 
         // 构建消息对象，并将 DTO 转成 Json 字符串设置到消息体中
@@ -257,11 +258,12 @@ public class RelationServiceImpl implements RelationService {
         }
 
         // 发送 MQ
-        // 构建消息体 DTO
+        // 构建消息体 DTO(业务事件 ID: 一次取关动作一个 ID)
         UnfollowUserMqDTO unfollowUserMqDTO = UnfollowUserMqDTO.builder()
                 .userId(userId)
                 .unfollowUserId(unfollowUserId)
                 .createTime(LocalDateTime.now())
+                .eventId(UUID.randomUUID().toString())
                 .build();
 
         // 构建消息对象，并将 DTO 转成 Json 字符串设置到消息体中

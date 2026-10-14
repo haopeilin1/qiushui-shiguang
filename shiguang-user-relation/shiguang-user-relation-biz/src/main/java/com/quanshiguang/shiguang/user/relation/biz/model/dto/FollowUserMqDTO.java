@@ -24,4 +24,10 @@ public class FollowUserMqDTO {
     private Long followUserId;
 
     private LocalDateTime createTime;
+
+    /**
+     * 业务事件 ID: 关注动作发生时生成,随消息体流转,
+     * 供下游计数消费者构造幂等键(重投/重放不变,新动作必定不同)
+     */
+    private String eventId;
 }

@@ -32,4 +32,9 @@ public class CountFollowUnfollowMqDTO {
      */
     private Integer type;
 
+    /**
+     * 业务事件 ID: 上游关注/取关动作的事件标识,供幂等键使用
+     */
+    private String eventId;
+
 }

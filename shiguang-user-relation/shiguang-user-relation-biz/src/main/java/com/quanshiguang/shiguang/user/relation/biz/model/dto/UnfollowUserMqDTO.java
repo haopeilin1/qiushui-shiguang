@@ -24,4 +24,9 @@ public class UnfollowUserMqDTO {
     private Long unfollowUserId;
 
     private LocalDateTime createTime;
+
+    /**
+     * 业务事件 ID: 取关动作发生时生成,随消息体流转,供下游计数消费者构造幂等键
+     */
+    private String eventId;
 }

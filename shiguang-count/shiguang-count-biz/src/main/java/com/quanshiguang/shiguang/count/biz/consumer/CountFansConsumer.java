@@ -62,11 +62,14 @@ public class CountFansConsumer implements RocketMQListener<String> {
             CountFollowUnfollowMqDTO dto = JsonUtils.parseObject(body, CountFollowUnfollowMqDTO.class);
             if (Objects.nonNull(dto) && Objects.nonNull(dto.getUserId())
                     && Objects.nonNull(dto.getTargetUserId())) {
-                // 业务幂等键: topic + 主体 + 动作
-                // (业务键而非 msgId: msgId 生产端重发会变,防不了业务重放)
+                // 业务幂等键: topic + 业务事件 ID
+                // eventId 随关注/取关动作生成、随消息体流转: 重投/重放不变(可判重),
+                // 而"取关后重新关注"是新动作新 eventId(不误拦合法重复操作)
+                // 无 eventId 的历史消息退化为 主体+动作 键
                 String action = Integer.valueOf(1).equals(dto.getType()) ? "FOLLOW" : "UNFOLLOW";
                 String bizKey = MQConstants.TOPIC_COUNT_FANS + ":"
-                        + dto.getUserId() + ":" + dto.getTargetUserId() + ":" + action;
+                        + (Objects.nonNull(dto.getEventId()) ? dto.getEventId()
+                                : dto.getUserId() + ":" + dto.getTargetUserId() + ":" + action);
                 if (dedupService.isDuplicate(bizKey, null)) {
                     // 重复消息,直接确认消费成功(拦截)
                     return;

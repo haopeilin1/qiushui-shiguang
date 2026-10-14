@@ -61,9 +61,11 @@ public class MqIdempotencyReplayBenchmark {
         producer.start();
         try {
             // 同一业务事件: userId 关注 targetUserId
-            // (与 RelationServiceImpl.follow 发出的消息体结构一致)
+            // (与 RelationServiceImpl.follow 发出的消息体结构一致;
+            //  eventId 固定 = 模拟同一事件的 100 次重复投递,而非 100 个新事件)
             String body = String.format(
-                    "{\"userId\":%d,\"targetUserId\":%d,\"type\":1}", userId, targetUserId);
+                    "{\"userId\":%d,\"targetUserId\":%d,\"type\":1,\"eventId\":\"benchmark-replay-%d-%d\"}",
+                    userId, targetUserId, userId, targetUserId);
 
             int success = 0;
             long start = System.currentTimeMillis();
@@ -86,11 +88,11 @@ public class MqIdempotencyReplayBenchmark {
             System.out.println("=== 重放完成 ===");
             System.out.printf("发送成功: %d/%d, 耗时 %d ms%n", success, replayTimes, elapsed);
             System.out.println();
-            System.out.println("下一步验证:");
-            System.out.printf("  1. redis-cli HGETALL count:user:%d  (看 fansTotal)%n", targetUserId);
-            System.out.printf("  2. mysql: SELECT * FROM t_following WHERE user_id=%d AND following_user_id=%d;%n",
+            System.out.println("下一步验证(以 DB 为准):");
+            System.out.printf("  mysql: SELECT user_id, fans_total FROM t_user_count WHERE user_id=%d;%n", targetUserId);
+            System.out.printf("  dedup 键: redis-cli EXISTS mq:dedup:CountFansTopic:benchmark-replay-%d-%d%n",
                     userId, targetUserId);
-            System.out.printf("  3. 对照开关: shiguang-count 服务配置 mq.dedup.enabled 后重启重跑%n");
+            System.out.printf("  对照开关: shiguang-count 服务以 -Dmq.dedup.enabled=false 重启后重跑%n");
         } finally {
             producer.shutdown();
         }

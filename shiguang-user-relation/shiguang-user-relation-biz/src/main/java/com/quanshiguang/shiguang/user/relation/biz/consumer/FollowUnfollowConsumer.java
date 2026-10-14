@@ -146,6 +146,7 @@ public class FollowUnfollowConsumer implements RocketMQListener<Message> {
                     .userId(userId)
                     .targetUserId(followUserId)
                     .type(FollowUnfollowTypeEnum.FOLLOW.getCode())
+                    .eventId(followUserMqDTO.getEventId())
                     .build();
 
             // 发送 MQ
@@ -202,6 +203,7 @@ public class FollowUnfollowConsumer implements RocketMQListener<Message> {
                     .userId(userId)
                     .targetUserId(unfollowUserId)
                     .type(FollowUnfollowTypeEnum.UNFOLLOW.getCode())
+                    .eventId(unfollowUserMqDTO.getEventId())
                     .build();
 
             // 发送 MQ

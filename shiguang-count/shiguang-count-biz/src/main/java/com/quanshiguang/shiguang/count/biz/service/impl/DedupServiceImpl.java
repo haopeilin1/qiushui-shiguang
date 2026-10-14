@@ -39,9 +39,11 @@ public class DedupServiceImpl implements DedupService {
     private static final String DEDUP_KEY_PREFIX = "mq:dedup:";
 
     /**
-     * Redis 层 TTL: 7 天,覆盖最大重试窗口
+     * Redis 层 TTL: 24 小时。RocketMQ 默认 16 次重试总窗口约 4.6 小时
+     * (delayLevel 10s→2h 递增),24h 约 5 倍冗余;键带业务事件 ID,
+     * 无需靠超长 TTL 兜底,避免键长期驻留
      */
-    private static final Duration DEDUP_TTL = Duration.ofDays(7);
+    private static final Duration DEDUP_TTL = Duration.ofHours(24);
 
     @Resource
     private RedisTemplate<String, Object> redisTemplate;
