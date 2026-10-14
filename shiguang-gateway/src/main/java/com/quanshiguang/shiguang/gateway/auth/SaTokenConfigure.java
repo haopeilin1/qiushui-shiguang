@@ -42,12 +42,9 @@ public class SaTokenConfigure {
                             .check(r -> StpUtil.checkLogin()) // 校验是否登录
                     ;
 
-                    // 权限认证 -- 不同模块, 校验不同权限
-                    // SaRouter.match("/auth/logout", r -> StpUtil.checkPermission("app:note:publish"));
-                    // SaRouter.match("/auth/user/logout", r -> StpUtil.checkRole("admin"));
-                    // SaRouter.match("/admin/**", r -> StpUtil.checkPermission("admin"))1;
-                    // SaRouter.match("/goods/**", r -> StpUtil.checkPermission("goods"));
-                    // SaRouter.match("/orders/**", r -> StpUtil.checkPermission("orders"));
+                    // 权限认证 -- 不同模块, 校验不同权限(RBAC 激活: 数据链路 StpInterfaceImpl 读 Redis 用户角色/角色权限)
+                    SaRouter.match("/note/announcement/publish", r -> StpUtil.checkPermission("announcement:publish"));
+                    SaRouter.match("/note/announcement/read/stat", r -> StpUtil.checkPermission("announcement:readstat"));
 
                     // 更多匹配 ...  */
                 })
