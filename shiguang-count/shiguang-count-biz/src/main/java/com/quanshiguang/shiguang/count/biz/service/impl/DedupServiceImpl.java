@@ -17,11 +17,12 @@ import java.time.LocalDateTime;
  * @description: 消息消费双层幂等服务实现
  *
  * 设计说明:
- * 1. 幂等键使用业务键(userId+targetId+action)而非 msgId:
- *    msgId 在生产端重发时会变化,无法防御"同一业务事件的重放";
- *    业务键对业务重放仍然有效。
- * 2. Redis 层 TTL 7 天: 覆盖 RocketMQ 最大消费重试窗口
- *    (16 次重试最长约 4 天半)与 Rebalance 迟到消息。
+ * 1. 幂等键使用业务事件 ID(eventId,随业务动作生成、随消息体流转)而非 msgId:
+ *    msgId 在重试重投(%RETRY% 主题重新投递会生成新 ID)与生产端重发时都会变;
+ *    eventId 对重投/重放稳定,且不误拦"取关后再关注"等合法新动作;
+ *    无 eventId 的历史消息退化为 userId:targetId:action 键。
+ * 2. Redis 层 TTL 24 小时: RocketMQ 默认 16 次重试总窗口约 4.6 小时
+ *    (delayLevel 10s→2h 递增),24h 约 5 倍冗余;键带事件 ID,无需超长 TTL。
  * 3. 双层理由: Redis 快但非持久(AOF everysec 可能丢 1 秒数据,
  *    也可能被运维清空),MySQL 唯一索引是最终防线;
  *    正常流量 99% 被 Redis 挡住,DB 只承接 Redis 故障期。
