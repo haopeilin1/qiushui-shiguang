@@ -5,6 +5,7 @@ import com.quanshiguang.shiguang.count.biz.constant.MQConstants;
 import com.quanshiguang.shiguang.count.biz.constant.RedisKeyConstants;
 import com.quanshiguang.shiguang.count.biz.domain.mapper.UserCountDOMapper;
 import com.quanshiguang.shiguang.count.biz.model.dto.NoteOperateMqDTO;
+import com.quanshiguang.shiguang.count.biz.service.MqDedupSupport;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.rocketmq.common.message.Message;
@@ -32,6 +33,8 @@ public class CountNotePublishConsumer implements RocketMQListener<Message> {
     private RedisTemplate<String, Object> redisTemplate;
     @Resource
     private UserCountDOMapper userCountDOMapper;
+    @Resource
+    private MqDedupSupport mqDedupSupport;
 
     @Override
     public void onMessage(Message message) {
@@ -41,6 +44,16 @@ public class CountNotePublishConsumer implements RocketMQListener<Message> {
         String tags = message.getTags();
 
         log.info("==> CountNotePublishConsumer 消费了消息 {}, tags: {}", bodyJsonStr, tags);
+
+        // 幂等: 笔记发布/删除以 "动作 + noteId" 为业务键(同一笔记只会发布一次、删除一次)
+        NoteOperateMqDTO noteOperateMqDTO = JsonUtils.parseObject(bodyJsonStr, NoteOperateMqDTO.class);
+        if (Objects.nonNull(noteOperateMqDTO) && Objects.nonNull(noteOperateMqDTO.getNoteId())) {
+            String action = Objects.equals(tags, MQConstants.TAG_NOTE_DELETE) ? "DELETE" : "PUBLISH";
+            if (mqDedupSupport.isDuplicateByEvent(MQConstants.TOPIC_NOTE_OPERATE, null,
+                    action + ":" + noteOperateMqDTO.getNoteId())) {
+                return;
+            }
+        }
 
         // 根据 MQ 标签，判断笔记操作类型
         if (Objects.equals(tags, MQConstants.TAG_NOTE_PUBLISH)) { // 笔记发布

@@ -34,4 +34,10 @@ public class LikeUnlikeNoteMqDTO {
     private Long noteCreatorId;
 
     private LocalDateTime createTime;
+
+    /**
+     * 业务事件 ID: 一次点赞/取消动作生成一个, 随消息体流转到计数服务,
+     * 供消费端幂等键使用(重投/重放不变, 且不会误拦"取消后再点赞")
+     */
+    private String eventId;
 }

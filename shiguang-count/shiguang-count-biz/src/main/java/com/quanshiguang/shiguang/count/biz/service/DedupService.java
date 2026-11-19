@@ -11,7 +11,7 @@ public interface DedupService {
      * 判断消息是否为重复消息(双层幂等)
      *
      * 第一层 Redis SETNX(快路径,非持久):
-     *   - SET bizKey 1 NX EX 7d,首次消息写入成功返回 false(非重复)
+     *   - SET bizKey 1 NX EX 24h,首次消息写入成功返回 false(非重复)
      *   - key 已存在返回 true(重复,拦截)
      *   - 覆盖消费重试/Rebalance 重投/业务重放场景
      *

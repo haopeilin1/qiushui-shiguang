@@ -25,4 +25,9 @@ public class CountLikeUnlikeCommentMqDTO {
      * 0: 取消点赞， 1：点赞
      */
     private Integer type;
+
+    /**
+     * 业务事件 ID(上游评论点赞动作生成): 优先作为幂等键
+     */
+    private String eventId;
 }

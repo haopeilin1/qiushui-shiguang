@@ -539,6 +539,7 @@ public class CommentServiceImpl implements CommentService {
                 .commentId(commentId)
                 .type(LikeUnlikeCommentTypeEnum.LIKE.getCode()) // 点赞评论
                 .createTime(LocalDateTime.now())
+                .eventId(UUID.randomUUID().toString()) // 业务事件 ID: 一次评论点赞动作一个
                 .build();
 
         // 构建消息对象，并将 DTO 转成 Json 字符串设置到消息体中
@@ -629,6 +630,7 @@ public class CommentServiceImpl implements CommentService {
                 .commentId(commentId)
                 .type(LikeUnlikeCommentTypeEnum.UNLIKE.getCode()) // 取消点赞评论
                 .createTime(LocalDateTime.now())
+                .eventId(UUID.randomUUID().toString()) // 业务事件 ID: 一次评论取消点赞动作一个
                 .build();
 
         // 构建消息对象，并将 DTO 转成 Json 字符串设置到消息体中

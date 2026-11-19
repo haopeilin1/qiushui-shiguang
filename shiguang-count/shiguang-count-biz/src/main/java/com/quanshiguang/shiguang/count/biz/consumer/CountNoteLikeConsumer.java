@@ -9,6 +9,7 @@ import com.quanshiguang.shiguang.count.biz.constant.RedisKeyConstants;
 import com.quanshiguang.shiguang.count.biz.enums.LikeUnlikeNoteTypeEnum;
 import com.quanshiguang.shiguang.count.biz.model.dto.AggregationCountLikeUnlikeNoteMqDTO;
 import com.quanshiguang.shiguang.count.biz.model.dto.CountLikeUnlikeNoteMqDTO;
+import com.quanshiguang.shiguang.count.biz.service.MqDedupSupport;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.rocketmq.client.producer.SendCallback;
@@ -44,6 +45,8 @@ public class CountNoteLikeConsumer implements RocketMQListener<String> {
     private RedisTemplate<String, Object> redisTemplate;
     @Resource
     private RocketMQTemplate rocketMQTemplate;
+    @Resource
+    private MqDedupSupport mqDedupSupport;
 
     private BufferTrigger<String> bufferTrigger = BufferTrigger.<String>batchBlocking()
             .bufferSize(50000) // 缓存队列的最大容量
@@ -54,6 +57,16 @@ public class CountNoteLikeConsumer implements RocketMQListener<String> {
 
     @Override
     public void onMessage(String body) {
+        // 幂等: 优先使用上游业务事件 ID, 重投/重放不会重复计数
+        CountLikeUnlikeNoteMqDTO dto = JsonUtils.parseObject(body, CountLikeUnlikeNoteMqDTO.class);
+        if (Objects.nonNull(dto) && Objects.nonNull(dto.getUserId()) && Objects.nonNull(dto.getNoteId())) {
+            String action = Objects.equals(dto.getType(), LikeUnlikeNoteTypeEnum.LIKE.getCode()) ? "LIKE" : "UNLIKE";
+            if (mqDedupSupport.isDuplicateByEvent(MQConstants.TOPIC_COUNT_NOTE_LIKE, dto.getEventId(),
+                    dto.getUserId() + ":" + dto.getNoteId() + ":" + action)) {
+                return;
+            }
+        }
+
         // 往 bufferTrigger 中添加元素
         bufferTrigger.enqueue(body);
     }

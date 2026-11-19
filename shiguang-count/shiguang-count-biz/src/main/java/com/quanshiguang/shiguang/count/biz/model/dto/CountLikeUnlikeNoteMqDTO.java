@@ -34,4 +34,9 @@ public class CountLikeUnlikeNoteMqDTO {
      * 笔记发布者 ID
      */
     private Long noteCreatorId;
+
+    /**
+     * 业务事件 ID(上游点赞动作生成): 优先作为幂等键
+     */
+    private String eventId;
 }

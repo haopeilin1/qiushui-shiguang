@@ -135,25 +135,25 @@ CREATE TABLE `t_topic` (
 -- ------------------------------------------------------------
 DROP TABLE IF EXISTS `t_note_like`;
 CREATE TABLE `t_note_like` (
-  `id`          BIGINT   NOT NULL,
+  `id`          BIGINT   NOT NULL AUTO_INCREMENT,
   `user_id`     BIGINT   NOT NULL,
   `note_id`     BIGINT   NOT NULL,
   `create_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  `status`      TINYINT  DEFAULT 0 COMMENT '0-有效 1-已取消',
+  `status`      TINYINT  DEFAULT 0 COMMENT '1-有效点赞 0-已取消(与 LikeUnlikeNoteTypeEnum 保持一致)',
   PRIMARY KEY (`id`),
-  KEY `idx_user_note` (`user_id`, `note_id`),
+  UNIQUE KEY `uk_user_note` (`user_id`, `note_id`) COMMENT '幂等约束: 同一用户同一笔记仅一条点赞记录, 支撑 insertOrUpdate',
   KEY `idx_note_id` (`note_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='笔记点赞关系表';
 
 DROP TABLE IF EXISTS `t_note_collection`;
 CREATE TABLE `t_note_collection` (
-  `id`          BIGINT   NOT NULL,
+  `id`          BIGINT   NOT NULL AUTO_INCREMENT,
   `user_id`     BIGINT   NOT NULL,
   `note_id`     BIGINT   NOT NULL,
   `create_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  `status`      TINYINT  DEFAULT 0,
+  `status`      TINYINT  DEFAULT 0 COMMENT '1-有效收藏 0-已取消(与 CollectUnCollectNoteTypeEnum 保持一致)',
   PRIMARY KEY (`id`),
-  KEY `idx_user_note` (`user_id`, `note_id`),
+  UNIQUE KEY `uk_user_note` (`user_id`, `note_id`) COMMENT '幂等约束: 同一用户同一笔记仅一条收藏记录, 支撑 insertOrUpdate',
   KEY `idx_note_id` (`note_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='笔记收藏关系表';
 
@@ -194,7 +194,7 @@ CREATE TABLE `t_following` (
   `following_user_id` BIGINT   NOT NULL COMMENT '被关注者',
   `create_time`       DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
-  KEY `idx_user_id` (`user_id`),
+  UNIQUE KEY `uk_user_following` (`user_id`, `following_user_id`) COMMENT '幂等约束: 重复关注不会产生第二条记录',
   KEY `idx_following_user_id` (`following_user_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='关注表(正向)';
 
@@ -205,7 +205,7 @@ CREATE TABLE `t_fans` (
   `fans_user_id` BIGINT   NOT NULL COMMENT '关注者',
   `create_time`  DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
-  KEY `idx_user_id` (`user_id`),
+  UNIQUE KEY `uk_user_fans` (`user_id`, `fans_user_id`) COMMENT '幂等约束: 重复关注不会产生第二条粉丝记录',
   KEY `idx_fans_user_id` (`fans_user_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='粉丝表(反向)';
 

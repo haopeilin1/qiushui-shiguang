@@ -5,12 +5,15 @@ import com.google.common.util.concurrent.RateLimiter;
 import com.quanshiguang.framework.common.util.JsonUtils;
 import com.quanshiguang.shiguang.count.biz.constant.MQConstants;
 import com.quanshiguang.shiguang.count.biz.domain.mapper.UserCountDOMapper;
+import com.quanshiguang.shiguang.count.biz.service.MqDedupSupport;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.rocketmq.common.message.Message;
 import org.apache.rocketmq.spring.annotation.RocketMQMessageListener;
 import org.apache.rocketmq.spring.core.RocketMQListener;
 import org.springframework.stereotype.Component;
 
+import java.nio.charset.StandardCharsets;
 import java.util.Map;
 
 /**
@@ -24,19 +27,27 @@ import java.util.Map;
         topic = MQConstants.TOPIC_COUNT_FANS_2_DB // 主题 Topic
         )
 @Slf4j
-public class CountFans2DBConsumer implements RocketMQListener<String> {
+public class CountFans2DBConsumer implements RocketMQListener<Message> {
 
     @Resource
     private UserCountDOMapper userCountDOMapper;
+    @Resource
+    private MqDedupSupport mqDedupSupport;
 
     // 每秒创建 5000 个令牌
     private RateLimiter rateLimiter = RateLimiter.create(5000);
 
     @Override
-    public void onMessage(String body) {
+    public void onMessage(Message message) {
         // 流量削峰：通过获取令牌，如果没有令牌可用，将阻塞，直到获得
         rateLimiter.acquire();
 
+        // 幂等: 聚合消息没有业务事件 ID, 用 RocketMQ UNIQ_KEY 做消息级判重
+        if (mqDedupSupport.isDuplicateByMessage(this, message)) {
+            return;
+        }
+
+        String body = new String(message.getBody(), StandardCharsets.UTF_8);
         log.info("## 消费到了 MQ 【计数: 粉丝数入库】, {}...", body);
 
         Map<Long, Integer> countMap = null;

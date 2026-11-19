@@ -5,6 +5,7 @@ import com.quanshiguang.shiguang.count.biz.constant.MQConstants;
 import com.quanshiguang.shiguang.count.biz.constant.RedisKeyConstants;
 import com.quanshiguang.shiguang.count.biz.enums.FollowUnfollowTypeEnum;
 import com.quanshiguang.shiguang.count.biz.model.dto.CountFollowUnfollowMqDTO;
+import com.quanshiguang.shiguang.count.biz.service.MqDedupSupport;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -38,6 +39,8 @@ public class CountFollowingConsumer implements RocketMQListener<String> { // TOD
     private RedisTemplate<String, Object> redisTemplate;
     @Resource
     private RocketMQTemplate rocketMQTemplate;
+    @Resource
+    private MqDedupSupport mqDedupSupport;
 
     @Override
     public void onMessage(String body) {
@@ -54,6 +57,14 @@ public class CountFollowingConsumer implements RocketMQListener<String> { // TOD
         Integer type = countFollowUnfollowMqDTO.getType();
         // 原用户ID
         Long userId = countFollowUnfollowMqDTO.getUserId();
+
+        // 幂等: 优先使用上游业务事件 ID, 重投/重放不会重复计数
+        String action = Objects.equals(type, FollowUnfollowTypeEnum.FOLLOW.getCode()) ? "FOLLOW" : "UNFOLLOW";
+        if (mqDedupSupport.isDuplicateByEvent(MQConstants.TOPIC_COUNT_FOLLOWING,
+                countFollowUnfollowMqDTO.getEventId(),
+                userId + ":" + countFollowUnfollowMqDTO.getTargetUserId() + ":" + action)) {
+            return;
+        }
 
         // 更新 Redis
         String redisKey = RedisKeyConstants.buildCountUserKey(userId);

@@ -7,7 +7,7 @@ import com.quanshiguang.shiguang.count.biz.constant.MQConstants;
 import com.quanshiguang.shiguang.count.biz.constant.RedisKeyConstants;
 import com.quanshiguang.shiguang.count.biz.enums.FollowUnfollowTypeEnum;
 import com.quanshiguang.shiguang.count.biz.model.dto.CountFollowUnfollowMqDTO;
-import com.quanshiguang.shiguang.count.biz.service.DedupService;
+import com.quanshiguang.shiguang.count.biz.service.MqDedupSupport;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.ibatis.annotations.Case;
@@ -45,7 +45,7 @@ public class CountFansConsumer implements RocketMQListener<String> {
     @Resource
     private RocketMQTemplate rocketMQTemplate;
     @Resource
-    private DedupService dedupService;
+    private MqDedupSupport mqDedupSupport;
 
     private BufferTrigger<String> bufferTrigger = BufferTrigger.<String>batchBlocking()
             .bufferSize(50000) // 缓存队列的最大容量
@@ -67,10 +67,8 @@ public class CountFansConsumer implements RocketMQListener<String> {
                 // 而"取关后重新关注"是新动作新 eventId(不误拦合法重复操作)
                 // 无 eventId 的历史消息退化为 主体+动作 键
                 String action = Integer.valueOf(1).equals(dto.getType()) ? "FOLLOW" : "UNFOLLOW";
-                String bizKey = MQConstants.TOPIC_COUNT_FANS + ":"
-                        + (Objects.nonNull(dto.getEventId()) ? dto.getEventId()
-                                : dto.getUserId() + ":" + dto.getTargetUserId() + ":" + action);
-                if (dedupService.isDuplicate(bizKey, null)) {
+                if (mqDedupSupport.isDuplicateByEvent(MQConstants.TOPIC_COUNT_FANS, dto.getEventId(),
+                        dto.getUserId() + ":" + dto.getTargetUserId() + ":" + action)) {
                     // 重复消息,直接确认消费成功(拦截)
                     return;
                 }

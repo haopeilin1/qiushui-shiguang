@@ -875,6 +875,7 @@ public class NoteServiceImpl implements NoteService {
                 .type(LikeUnlikeNoteTypeEnum.LIKE.getCode()) // 点赞笔记
                 .createTime(now)
                 .noteCreatorId(creatorId) // 笔记发布者 ID
+                .eventId(UUID.randomUUID().toString()) // 业务事件 ID: 一次点赞动作一个
                 .build();
 
         // 构建消息对象，并将 DTO 转成 Json 字符串设置到消息体中
@@ -968,6 +969,7 @@ public class NoteServiceImpl implements NoteService {
                 .type(LikeUnlikeNoteTypeEnum.UNLIKE.getCode()) // 取消点赞笔记
                 .createTime(LocalDateTime.now())
                 .noteCreatorId(creatorId) // 笔记发布者 ID
+                .eventId(UUID.randomUUID().toString()) // 业务事件 ID: 一次取消动作一个
                 .build();
 
         // 构建消息对象，并将 DTO 转成 Json 字符串设置到消息体中
@@ -1131,6 +1133,7 @@ public class NoteServiceImpl implements NoteService {
                 .type(CollectUnCollectNoteTypeEnum.COLLECT.getCode()) // 收藏笔记
                 .createTime(now)
                 .noteCreatorId(creatorId) // 笔记发布者 ID
+                .eventId(UUID.randomUUID().toString()) // 业务事件 ID: 一次收藏动作一个
                 .build();
 
         // 构建消息对象，并将 DTO 转成 Json 字符串设置到消息体中
@@ -1225,6 +1228,7 @@ public class NoteServiceImpl implements NoteService {
                 .type(CollectUnCollectNoteTypeEnum.UN_COLLECT.getCode()) // 取消收藏笔记
                 .createTime(LocalDateTime.now())
                 .noteCreatorId(creatorId) // 笔记发布者 ID
+                .eventId(UUID.randomUUID().toString()) // 业务事件 ID: 一次取消收藏动作一个
                 .build();
 
         // 构建消息对象，并将 DTO 转成 Json 字符串设置到消息体中

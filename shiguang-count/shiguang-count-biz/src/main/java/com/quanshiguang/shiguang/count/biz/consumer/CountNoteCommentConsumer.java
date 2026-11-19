@@ -8,13 +8,16 @@ import com.quanshiguang.shiguang.count.biz.constant.MQConstants;
 import com.quanshiguang.shiguang.count.biz.constant.RedisKeyConstants;
 import com.quanshiguang.shiguang.count.biz.domain.mapper.NoteCountDOMapper;
 import com.quanshiguang.shiguang.count.biz.model.dto.CountPublishCommentMqDTO;
+import com.quanshiguang.shiguang.count.biz.service.MqDedupSupport;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.rocketmq.common.message.Message;
 import org.apache.rocketmq.spring.annotation.RocketMQMessageListener;
 import org.apache.rocketmq.spring.core.RocketMQListener;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
 
+import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.List;
 import java.util.Map;
@@ -31,12 +34,14 @@ import java.util.stream.Collectors;
         topic = MQConstants.TOPIC_COUNT_NOTE_COMMENT // 主题 Topic
         )
 @Slf4j
-public class CountNoteCommentConsumer implements RocketMQListener<String> {
+public class CountNoteCommentConsumer implements RocketMQListener<Message> {
 
     @Resource
     private NoteCountDOMapper noteCountDOMapper;
     @Resource
     private RedisTemplate<String, Object> redisTemplate;
+    @Resource
+    private MqDedupSupport mqDedupSupport;
 
     private BufferTrigger<String> bufferTrigger = BufferTrigger.<String>batchBlocking()
             .bufferSize(50000) // 缓存队列的最大容量
@@ -46,9 +51,13 @@ public class CountNoteCommentConsumer implements RocketMQListener<String> {
             .build();
 
     @Override
-    public void onMessage(String body) {
+    public void onMessage(Message message) {
+        // 幂等: 消息体是"评论列表", 没有单一业务主体, 用 RocketMQ UNIQ_KEY 做消息级判重
+        if (mqDedupSupport.isDuplicateByMessage(this, message)) {
+            return;
+        }
         // 往 bufferTrigger 中添加元素
-        bufferTrigger.enqueue(body);
+        bufferTrigger.enqueue(new String(message.getBody(), StandardCharsets.UTF_8));
     }
 
     private void consumeMessage(List<String> bodys) {

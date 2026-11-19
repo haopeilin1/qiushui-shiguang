@@ -29,4 +29,9 @@ public class LikeUnlikeCommentMqDTO {
     private Integer type;
 
     private LocalDateTime createTime;
+
+    /**
+     * 业务事件 ID: 一次评论点赞/取消动作生成一个, 供计数服务幂等键使用
+     */
+    private String eventId;
 }

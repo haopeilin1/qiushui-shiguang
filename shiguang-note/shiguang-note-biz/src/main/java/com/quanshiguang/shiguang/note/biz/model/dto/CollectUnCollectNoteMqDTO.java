@@ -34,4 +34,9 @@ public class CollectUnCollectNoteMqDTO {
      * 笔记发布者 ID
      */
     private Long noteCreatorId;
+
+    /**
+     * 业务事件 ID: 一次收藏/取消动作生成一个, 供计数服务幂等键使用
+     */
+    private String eventId;
 }
