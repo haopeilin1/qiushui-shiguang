@@ -520,23 +520,32 @@ public class NoteServiceImpl implements NoteService {
         // 笔记内容更新
         // 查询此篇笔记内容对应的 UUID
         NoteDO noteDO1 = noteDOMapper.selectByPrimaryKey(noteId);
-        String contentUuid = noteDO1.getContentUuid();
+        String oldContentUuid = noteDO1.getContentUuid();
 
-        // 笔记内容是否更新成功
-        boolean isUpdateContentSuccess = false;
         if (StringUtils.isBlank(content)) {
-            // 若笔记内容为空，则删除 K-V 存储
-            isUpdateContentSuccess = keyValueRpcService.deleteNoteContent(contentUuid);
+            // 清空正文: 先删 KV, 成功后再把 t_note.content_uuid 置空, 避免残留脏指针
+            if (StringUtils.isNotBlank(oldContentUuid)) {
+                boolean isDeleted = keyValueRpcService.deleteNoteContent(oldContentUuid);
+                if (!isDeleted) {
+                    throw new BizException(ResponseCodeEnum.NOTE_UPDATE_FAIL);
+                }
+                noteDOMapper.updateContentUuid(noteId, null);
+            }
         } else {
-            // 若将无内容的笔记，更新为了有内容的笔记，需要重新生成 UUID
-            contentUuid = StringUtils.isBlank(contentUuid) ? UUID.randomUUID().toString() : contentUuid;
-            // 调用 K-V 更新短文本
-            isUpdateContentSuccess = keyValueRpcService.saveNoteContent(contentUuid, content);
-        }
+            // 有正文: 旧 uuid 为空说明"无正文 -> 有正文", 需要新生成一个并回写 t_note
+            String contentUuid = StringUtils.isBlank(oldContentUuid)
+                    ? UUID.randomUUID().toString() : oldContentUuid;
 
-        // 如果更新失败，抛出业务异常，回滚事务
-        if (!isUpdateContentSuccess) {
-            throw new BizException(ResponseCodeEnum.NOTE_UPDATE_FAIL);
+            // 先写 KV, 成功后再回写 content_uuid:
+            // 保证 t_note 不会指向一个 Cassandra 里不存在的 UUID
+            boolean isUpdateContentSuccess = keyValueRpcService.saveNoteContent(contentUuid, content);
+            if (!isUpdateContentSuccess) {
+                throw new BizException(ResponseCodeEnum.NOTE_UPDATE_FAIL);
+            }
+
+            if (!Objects.equals(contentUuid, oldContentUuid)) {
+                noteDOMapper.updateContentUuid(noteId, contentUuid);
+            }
         }
 
         return Response.success();

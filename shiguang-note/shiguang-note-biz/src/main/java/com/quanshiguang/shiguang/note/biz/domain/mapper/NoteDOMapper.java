@@ -41,4 +41,11 @@ public interface NoteDOMapper {
 
     int updateIsTop(NoteDO noteDO);
 
+    /**
+     * 单独更新笔记正文 UUID:
+     * - 正文新建/替换成功后回写新 UUID
+     * - 正文被清空时置为 NULL, 避免残留脏指针
+     */
+    int updateContentUuid(@Param("id") Long id, @Param("contentUuid") String contentUuid);
+
 }

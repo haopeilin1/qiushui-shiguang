@@ -235,6 +235,10 @@
     where id = #{id,jdbcType=BIGINT} and creator_id = #{creatorId,jdbcType=BIGINT}
   </update>
 
-
+  <update id="updateContentUuid">
+    update t_note
+    set content_uuid = #{contentUuid,jdbcType=VARCHAR}
+    where id = #{id,jdbcType=BIGINT}
+  </update>
 
 </mapper>

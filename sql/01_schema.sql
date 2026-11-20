@@ -112,7 +112,7 @@ CREATE TABLE `t_note` (
   `visible`          TINYINT      DEFAULT 0 COMMENT '0-公开 1-仅自己可见',
   `create_time`      DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `update_time`      DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  `status`           TINYINT      DEFAULT 0 COMMENT '0-正常 1-删除',
+  `status`           TINYINT      DEFAULT 0 COMMENT '0-待审核 1-正常 2-删除 3-下架',
   `content_uuid`     VARCHAR(64)  DEFAULT NULL COMMENT '正文UUID(KV服务关联)',
   PRIMARY KEY (`id`),
   KEY `idx_creator_id` (`creator_id`, `status`),
