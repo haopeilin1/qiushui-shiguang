@@ -34,6 +34,7 @@ public enum ResponseCodeEnum implements BaseExceptionInterface {
     ANNOUNCEMENT_NOT_FOUND("NOTE-21001", "公告不存在"),
     ANNOUNCEMENT_ALREADY_READ("NOTE-21002", "您已确认过该公告"),
     ANNOUNCEMENT_PUBLISH_FAIL("NOTE-21003", "公告发布失败"),
+    ANNOUNCEMENT_CANT_WITHDRAW("NOTE-21004", "公告撤回失败, 公告可能已被撤回"),
     ;
 
     // 异常码

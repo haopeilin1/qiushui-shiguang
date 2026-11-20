@@ -45,6 +45,7 @@ public class SaTokenConfigure {
                     // 权限认证 -- 不同模块, 校验不同权限(RBAC 激活: 数据链路 StpInterfaceImpl 读 Redis 用户角色/角色权限)
                     SaRouter.match("/note/announcement/publish", r -> StpUtil.checkPermission("announcement:publish"));
                     SaRouter.match("/note/announcement/read/stat", r -> StpUtil.checkPermission("announcement:readstat"));
+                    SaRouter.match("/note/announcement/withdraw", r -> StpUtil.checkPermission("announcement:manage"));
 
                     // 更多匹配 ...  */
                 })
