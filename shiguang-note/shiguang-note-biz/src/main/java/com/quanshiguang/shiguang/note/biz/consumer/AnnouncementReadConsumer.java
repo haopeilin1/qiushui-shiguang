@@ -1,5 +1,6 @@
 package com.quanshiguang.shiguang.note.biz.consumer;
 
+import cn.hutool.core.util.IdUtil;
 import com.quanshiguang.framework.common.util.JsonUtils;
 import com.quanshiguang.shiguang.note.biz.constant.RedisKeyConstants;
 import com.quanshiguang.shiguang.note.biz.domain.dataobject.AnnouncementReadDO;
@@ -53,7 +54,9 @@ public class AnnouncementReadConsumer implements RocketMQListener<String> {
         }
 
         AnnouncementReadDO readDO = AnnouncementReadDO.builder()
-                .id(System.currentTimeMillis()) // 记录 ID(够用即可,幂等靠唯一索引)
+                // 雪花 ID: 原实现用 System.currentTimeMillis(), 同一毫秒多个用户确认会主键冲突,
+                // 冲突被当成"重复消费"吞掉 → 回执丢失、计数不加
+                .id(IdUtil.getSnowflakeNextId())
                 .announcementId(dto.getAnnouncementId())
                 .userId(dto.getUserId())
                 .createTime(Objects.nonNull(dto.getCreateTime()) ? dto.getCreateTime() : LocalDateTime.now())

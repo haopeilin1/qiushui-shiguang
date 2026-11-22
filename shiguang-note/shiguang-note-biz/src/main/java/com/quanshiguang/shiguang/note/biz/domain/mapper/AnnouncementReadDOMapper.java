@@ -3,7 +3,10 @@ package com.quanshiguang.shiguang.note.biz.domain.mapper;
 import com.quanshiguang.shiguang.note.biz.domain.dataobject.AnnouncementReadDO;
 import org.apache.ibatis.annotations.Insert;
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
+
+import java.util.List;
 
 /**
  * @description: 公告已读回执 Mapper(已读回执子域)
@@ -31,7 +34,13 @@ public interface AnnouncementReadDOMapper {
      * 查询用户是否已确认已读(回执链路兜底校验)
      */
     @Select("SELECT COUNT(*) FROM t_announcement_read WHERE announcement_id = #{announcementId} AND user_id = #{userId}")
-    int countByAnnouncementIdAndUserId(Long announcementId, Long userId);
+    int countByAnnouncementIdAndUserId(@Param("announcementId") Long announcementId, @Param("userId") Long userId);
+
+    /**
+     * 查询用户已确认的公告 ID 列表(Redis Set 丢失时, 用于重建已读集合)
+     */
+    @Select("SELECT announcement_id FROM t_announcement_read WHERE user_id = #{userId}")
+    List<Long> selectAnnouncementIdsByUserId(@Param("userId") Long userId);
 
     /**
      * 企业用户总数(已读率统计的应读分母;同库直查,避免跨服务契约变更)
